@@ -42,7 +42,33 @@ class Vaccine(models.Model):
     name = models.CharField(max_length=200)  # название вакцины
 
 class CatVaccination(models.Model):
-    cat = models.ForeignKey('Cat', on_delete=models.CASCADE)  
-    vaccine = models.ForeignKey(Vaccine, on_delete=models.CASCADE)  # вакцинация кота
-    date = models.DateField()  # дата вакцинации
-    next_date = models.DateField()  # следующая дата для вакцинации
+    cat = models.ForeignKey('Cat', on_delete=models.CASCADE)
+    vaccine = models.ForeignKey(Vaccine, on_delete=models.CASCADE)
+    date = models.DateField()
+    next_date = models.DateField()
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.cat} - {self.vaccine} ({self.date})'
+
+    @property
+    def status(self):
+        from datetime import date
+        if self.completed:
+            return 'completed'
+        if self.next_date < date.today():
+            return 'expired'
+        return 'pending'
+
+
+class Reminder(models.Model):
+    cat = models.ForeignKey('Cat', on_delete=models.CASCADE, related_name='reminders')
+    vaccination = models.ForeignKey(
+        'CatVaccination', on_delete=models.CASCADE, related_name='reminders'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_date = models.DateTimeField(null=True, blank=True)
+    message = models.TextField(max_length=500)
+
+    def __str__(self):
+        return f'Reminder for {self.cat}: {self.message}'
