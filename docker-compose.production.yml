@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn kittygram2.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - static_value:/app/static/
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    volumes:
+      - static_value:/var/html/static/
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  static_value:
